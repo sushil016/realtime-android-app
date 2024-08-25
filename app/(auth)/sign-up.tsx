@@ -6,7 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 const Signup = () => {
   return (
     <SafeAreaView>
-        <View>Signup page</View>
+        <View>
+            <Text>Signup</Text>
+        </View>
     </SafeAreaView>
   )
 }

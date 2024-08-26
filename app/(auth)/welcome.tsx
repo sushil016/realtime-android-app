@@ -13,7 +13,7 @@ const welcome = () => {
     const [activeIndex, setActiveIndex] = useState(0)
     const isLastSlide = activeIndex === onboarding.length - 1;
   return (
-    <SafeAreaView className="flex h-full justify-between bg-slate-300">
+    <SafeAreaView className="flex h-full justify-between bg-slate-200">
         <TouchableOpacity onPress={()=>{router.replace(href= "/(auth)/sign-up")}}
            classname="items-end flex justify-end w-full" >
             <Text className="text-xl font-JakartaBold ml-[290px] ">Skip</Text>

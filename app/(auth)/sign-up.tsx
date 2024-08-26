@@ -6,7 +6,7 @@ import { icons, images } from '@/constants'
 import InputField from '@/components/InputField'
 import CustomButton from '@/components/CustomButton'
 import Line from '@/components/Line'
-import { Link } from 'expo-router'
+import { Link, router } from 'expo-router'
 
 
 const Signup = () => {
@@ -57,7 +57,8 @@ const Signup = () => {
          <CustomButton 
          title="Sign-up"
          className='p-4 w-[300px] ml-8 my-4'
-         onPress={signupHandler}
+         //  onPress={signupHandler}
+         onPress={()=>{router.replace("/(root)/(tabs)/home")}}
          />
          <Line/>
 

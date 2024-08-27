@@ -1,4 +1,4 @@
-import { View, Text, Image } from 'react-native'
+import { View, Text, Image, Alert } from 'react-native'
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native'
@@ -7,18 +7,36 @@ import InputField from '@/components/InputField'
 import CustomButton from '@/components/CustomButton'
 import Line from '@/components/Line'
 import { Link, router } from 'expo-router'
+import axios from 'axios'
 
 
 const Signup = () => {
 
-  const [form, setForm] = useState(
-    {userName:"",
+  const [form, setForm] = useState({
     email:"",
     password:""}
   )
 
   function SigninPressHandler (){
-    alert("login press")
+    const signinData = {
+      email: form.email,
+      password: form.password
+    }
+
+    if (form.email && form.password) {
+      axios.post("http://192.168.1.157:8080/api/v2/login",signinData)
+         .then(res => {
+          console.log(res.data);
+          if (res.data.success == true) {
+            router.push("/(root)/(tabs)/home")
+          }else{
+            Alert.alert(JSON.stringify(res.data))
+          }
+         })
+         .catch(e => console.log(e))
+    }else{
+      Alert.alert("flease fill all the details")
+    }
   }
 
   return (
@@ -52,7 +70,7 @@ const Signup = () => {
          <CustomButton 
          title="Login"
          className='p-4 w-[300px] ml-8 my-4'
-         onPress={()=>{router.replace("/(root)/(tabs)/home")}}
+         onPress={SigninPressHandler}
          />
          <Line/>
 

@@ -1,4 +1,4 @@
-import { View, Text, Image } from 'react-native'
+import { View, Text, Image, Alert } from 'react-native'
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native'
@@ -25,10 +25,21 @@ const Signup = () => {
       password: form.password
 
     }
-   axios
+   if (form.userName && form.email && form.password) {
+    axios
    .post("http://192.168.1.157:8080/api/v2/signup", formData)
-   .then(res => console.log(res.data))
+   .then(res =>{
+     console.log(res.data);
+     if (res.data.success == true) {
+      router.replace("/(auth)/sign-in")
+     }else{
+      Alert.alert(JSON.stringify(res.data))
+    }
+    })
    .catch(e => console.log(e))
+   }else{
+    Alert.alert("flease fill all details")
+   }
    
   }
 

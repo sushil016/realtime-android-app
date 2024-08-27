@@ -64,7 +64,6 @@ exports.auth = async ( req:any , res:any)=> {
   }
 
   exports.logins =  async (req:any,res:any) => {
-    console.log("hello from login");
     
     try {
       const  {email,password} = req.body;

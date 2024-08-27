@@ -7,7 +7,7 @@ export default function Index() {
 
   // if (isSignedIn) return <Redirect href="/(root)/(tabs)/home" />;
 
-  return <Redirect href="/(auth)/welcome" />
+  return <Redirect href="/(auth)/sign-up" />
     // <SafeAreaView>
     //   <Link className="" href={"/(auth)/welcome"}>hii</Link>
     // </SafeAreaView>

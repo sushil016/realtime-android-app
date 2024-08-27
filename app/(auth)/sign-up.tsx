@@ -7,6 +7,7 @@ import InputField from '@/components/InputField'
 import CustomButton from '@/components/CustomButton'
 import Line from '@/components/Line'
 import { Link, router } from 'expo-router'
+import axios from 'axios'
 
 
 const Signup = () => {
@@ -16,8 +17,19 @@ const Signup = () => {
     email:"",
     password:""}
   )
-  function signupHandler(){
-    alert("sigup pressed")
+
+  function handleSubmit (){
+    const formData = {
+      userName :form.userName,
+      email: form.email,
+      password: form.password
+
+    }
+   axios
+   .post("http://192.168.1.157:8080/api/v2/signup", formData)
+   .then(res => console.log(res.data))
+   .catch(e => console.log(e))
+   
   }
 
   return (
@@ -58,7 +70,7 @@ const Signup = () => {
          title="Sign-up"
          className='p-4 w-[300px] ml-8 my-4'
          //  onPress={signupHandler}
-         onPress={()=>{router.replace("/(root)/(tabs)/home")}}
+         onPress={handleSubmit}
          />
          <Line/>
 

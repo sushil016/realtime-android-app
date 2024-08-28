@@ -8,6 +8,7 @@ import CustomButton from '@/components/CustomButton'
 import Line from '@/components/Line'
 import { Link, router } from 'expo-router'
 import axios from 'axios'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 
 const Signup = () => {
@@ -28,6 +29,9 @@ const Signup = () => {
          .then(res => {
           console.log(res.data);
           if (res.data.success == true) {
+            Alert.alert("Login Successful")
+            AsyncStorage.setItem('token',res.data.token)
+            AsyncStorage.setItem('isLoggedIn' , JSON.stringify(true))
             router.push("/(root)/(tabs)/home")
           }else{
             Alert.alert(JSON.stringify(res.data))

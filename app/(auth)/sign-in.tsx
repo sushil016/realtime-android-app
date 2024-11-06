@@ -1,6 +1,5 @@
-import { View, Text, Image, Alert } from 'react-native'
+import { View, Text, Image, Alert, StyleSheet } from 'react-native'
 import React, { useState } from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native'
 import { icons, images } from '@/constants'
 import InputField from '@/components/InputField'
@@ -9,95 +8,166 @@ import Line from '@/components/Line'
 import { Link, router } from 'expo-router'
 import axios from 'axios'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { endpoints } from '@/utils/config'
 
-
-const Signup = () => {
-
+const SignIn = () => {
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    email:"",
-    password:""}
-  )
+    email: "",
+    password: ""
+  });
 
-  function SigninPressHandler (){
-    const signinData = {
-      email: form.email,
-      password: form.password
-    }
+  async function SigninPressHandler() {
+    try {
+      setLoading(true);
+      if (!form.email || !form.password) {
+        Alert.alert("Error", "Please fill all the details");
+        return;
+      }
 
-    if (form.email && form.password) {
-      axios.post("http://192.168.1.157:8080/api/v2/login",signinData)
-         .then(res => {
-          console.log(res.data);
-          if (res.data.success == true) {
-            Alert.alert("Login Successful")
-            AsyncStorage.setItem('token',res.data.token)
-            AsyncStorage.setItem('isLoggedIn' , JSON.stringify(true))
-            router.push("/(root)/(tabs)/home")
-          }else{
-            Alert.alert(JSON.stringify(res.data))
-          }
-         })
-         .catch(e => console.log(e))
-    }else{
-      Alert.alert("flease fill all the details")
+      const response = await axios.post(endpoints.login, {
+        email: form.email,
+        password: form.password
+      });
+
+      console.log("Response:", response.data);
+
+      if (response.data.success) {
+        await AsyncStorage.setItem('token', response.data.token);
+        await AsyncStorage.setItem('isLoggedIn', 'true');
+        router.replace("/(root)/(tabs)/home");
+      } else {
+        Alert.alert("Error", response.data.message || "Login failed");
+      }
+    } catch (error: any) {
+      console.error("Login error:", error.response?.data || error.message);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Unable to connect to server"
+      );
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-   <ScrollView>
-     <View classname="h-full bg-white">
-         <View className="w-full bg-white relative h-[250px]">
-              <Image 
-                source={images.signUpCar}
-                className="z-0 w-full h-[250px]"
-              />
-              <Text className="font-bold text-black text-xl absolute bottom-5 left-5">Enter your Credentials to proceed</Text>
-         </View>
-         <View className="p-2">
+    <ScrollView style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.imageContainer}>
+          <Image 
+            source={images.signUpCar}
+            style={styles.image}
+          />
+          <Text style={styles.headerText}>
+            Enter your Credentials to proceed
+          </Text>
+        </View>
+
+        <View style={styles.formContainer}>
           <InputField 
-          label="Email"
-          icon={icons.email}
-          textContentType="emailAddress"
-          value={form.email}
-          onChangeText={(value) => setForm({ ...form, email: value })}
+            label="Email"
+            icon={icons.email}
+            textContentType="emailAddress"
+            value={form.email}
+            onChangeText={(value) => setForm({ ...form, email: value })}
           />
           <InputField 
-          label="Password"
-          icon={icons.lock}
-          secureTextEntry={true}
-          textContentType="password"
-          value={form.password}
-          onChangeText={(value) => setForm({ ...form, password: value })}
+            label="Password"
+            icon={icons.lock}
+            secureTextEntry={true}
+            textContentType="password"
+            value={form.password}
+            onChangeText={(value) => setForm({ ...form, password: value })}
           />
-         </View>
+        </View>
 
-         <CustomButton 
-         title="Login"
-         className='p-4 w-[300px] ml-8 my-4'
-         onPress={SigninPressHandler}
-         />
-         <Line/>
+        <CustomButton 
+          title="Login"
+          style={styles.loginButton}
+          onPress={SigninPressHandler}
+          loading={loading}
+        />
+        
+        <Line />
 
-         <CustomButton
-         title="Login with Google"
-         className="my-5 w-[300px] ml-8 my=4"
-         IconLeft={()=>{
-          <Image
-          source={icons.google}
-          resizeMode='contain'
-          className="w-5 h-5 mx-2"
-           />
-         }} 
-         bgVariant="outline"
-         textVariant="primary"
-         />
+        <CustomButton
+          title="Login with Google"
+          style={styles.googleButton}
+          IconLeft={() => (
+            <Image
+              source={icons.google}
+              style={styles.googleIcon}
+            />
+          )}
+          bgVariant="outline"
+          textVariant="primary"
+        />
 
-         <View className="flex items-center">
-          <Text>Don't Have an account?{""} <Link className='text-blue-500' href="/(auth)/sign-up"> Sign-up</Link></Text>
-         </View>
+        <View style={styles.footer}>
+          <Text>
+            Don't Have an account?{" "}
+            <Link href="/(auth)/sign-up" style={styles.link}>
+              Sign-up
+            </Link>
+          </Text>
+        </View>
       </View>
-   </ScrollView>
-  )                                                                               
+    </ScrollView>
+  );
 }
 
-export default Signup
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  content: {
+    flex: 1,
+  },
+  imageContainer: {
+    width: '100%',
+    height: 250,
+    backgroundColor: '#fff',
+    position: 'relative',
+  },
+  image: {
+    width: '100%',
+    height: 250,
+    zIndex: 0,
+  },
+  headerText: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  formContainer: {
+    padding: 16,
+  },
+  loginButton: {
+    paddingVertical: 16,
+    width: 300,
+    marginLeft: 32,
+    marginVertical: 16,
+  },
+  googleButton: {
+    marginVertical: 20,
+    width: 300,
+    marginLeft: 32,
+  },
+  googleIcon: {
+    width: 20,
+    height: 20,
+    marginHorizontal: 8,
+  },
+  footer: {
+    alignItems: 'center',
+  },
+  link: {
+    color: '#007AFF',
+  },
+});
+
+export default SignIn;

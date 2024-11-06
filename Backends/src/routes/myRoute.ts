@@ -1,13 +1,11 @@
-const express = require("express");
-const router = express.Router();
-const {auth} = require("../controllers/auth")
-const {logins} = require("../controllers/auth")
+import express from 'express';
+import { auth, logins } from '../controllers/auth';
 
-router.post('/login' , logins )
-router.post('/signup', auth)
+export const router = express.Router();
 
-router.get('/blog' ,  (req:any , res:any)=>{
-    res.send({msg: 'Blog Page'})
-})
+router.post('/login', logins);
+router.post('/signup', auth);
 
-module.exports = router
+router.get('/blog', (req: express.Request, res: express.Response) => {
+    res.send({ msg: 'Blog Page' });
+});

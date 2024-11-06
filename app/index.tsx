@@ -13,8 +13,8 @@ export default function Index() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   async function getData(){
     const data = await AsyncStorage.getItem('isLoggedIn');
-    setIsLoggedIn(data)
-    console.log("data of isloggedin",data);
+    setIsLoggedIn(data === 'true');
+    console.log("data of isloggedin", data);
     
   }
   useEffect(()=>{
@@ -24,7 +24,7 @@ export default function Index() {
 
   // if (isLoggedIn) return <Redirect href="/(root)/(tabs)/home" />
 
-  return isLoggedIn? <Redirect href="/(auth)/sign-in" /> : <Redirect href="/(root)/(tabs)/home"/>
+  return isLoggedIn? <Redirect href="/(root)/(tabs)/home" /> : <Redirect href="/(root)/(tabs)/home"/>
   
   //<Redirect href="/(auth)/sign-up" />
     // <SafeAreaView>

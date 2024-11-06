@@ -21,7 +21,7 @@ const TabIcon = ({
         source={source}
         tintColor="white"
         resizeMode="contain"
-        className="w-7 h-7"
+        className="w-4 h-4"
       />
     </View>
   </View>
@@ -42,7 +42,8 @@ export default function Layout() {
         backgroundColor:"#333333",
         borderRadius:1,
        overflow: "hidden",
-       height: 78,
+       height: 70,
+       paddingBottom: 45,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",

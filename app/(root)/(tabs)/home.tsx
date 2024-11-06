@@ -1,81 +1,157 @@
-import GoogleTextInput from "@/components/GoogleTextInput";
-import { icons } from "@/constants";
-import { router } from "expo-router";
-import { Text, View , FlatList, Image, TouchableOpacity, Alert} from "react-native";
-import MapView from "react-native-maps";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState, useEffect } from 'react';
+import { Text, View, FlatList, Image, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import MapView, { Circle, Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { icons } from '@/constants';
+import GoogleTextInput from '@/components/GoogleTextInput';
 
-const DATA = [
-  {
-    id: '1',
-    title: 'Mumbai'
-  },
-  {
-    id: '2',
-    title: 'pune',
-  },
-  {
-    id: '3',
-    title: 'banglore',
-  },
-];
-
-type ItemProps = {title: string};
-
-const Item = ({title}: ItemProps) => (
-  <View>
-    <Text className="text-2xl flex items-center justify-center bg-slate-300">{title}</Text>
-  </View>
-);
+interface Location {
+  latitude: number;
+  longitude: number;
+}
 
 export default function Home() {
+  const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
+  const [pinnedLocation, setPinnedLocation] = useState<Location | null>(null);
+  const [isInsideRadius, setIsInsideRadius] = useState(true);
+  
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission denied');
+        return;
+      }
 
-  function handleSignOut (){
-    
-    router.replace("/(auth)/sign-in");
-  }
+      let location = await Location.getCurrentPositionAsync({});
+      setCurrentLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude
+      });
+    })();
+  }, []);
 
-  function handleDestinationPress(){
-    Alert.alert("location checked")
-  }
+  const handlePinLocation = () => {
+    if (currentLocation) {
+      setPinnedLocation(currentLocation);
+      Alert.alert('Location pinned successfully');
+    }
+  };
+
   return (
-    <SafeAreaView>
-      <FlatList
-         data={DATA}
-         renderItem={({item}) => <Item className="text-3xl" title={item.title} />}
-        keyExtractor={item => item.id}
-        ListHeaderComponent={
-          <>
-          <View className="flex flex-row items-center justify-between my-5">
-              <Text className="text-2xl font-JakartaExtraBold ml-4">
-                Welcome 👋
-              </Text>
-              <TouchableOpacity
-                onPress={handleSignOut}
-                className="justify-center items-center w-10 h-10 mr-2 rounded-full bg-zinc-200"
-              >
-                <Image source={icons.out} className="w-4 h-4" />
-              </TouchableOpacity>
-            </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.welcomeText}>Welcome 👋</Text>
+        <TouchableOpacity
+          onPress={() => {/* handle sign out */}}
+          style={styles.signOutButton}
+        >
+          <Image source={icons.out} style={styles.icon} />
+        </TouchableOpacity>
+      </View>
 
-            <GoogleTextInput
-              icon={icons.search}
-              containerStyle="bg-white shadow-md shadow-neutral-300 mx-3"
-              handlePress={handleDestinationPress}
-            />
-            <>
-                <Text className="text-xl font-JakartaBold mt-5 mb-3 mx-2">
-                Your current location
-              </Text>
-              <View className="w-full h-[300px] flex">
-                <MapView/>
-              </View>
-            </>
-            
-          </>
-          
-        }
-      />
+      <View style={styles.mapContainer}>
+        {currentLocation && (
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              ...currentLocation,
+              latitudeDelta: 0.005,
+              longitudeDelta: 0.005,
+            }}
+          >
+            <Marker coordinate={currentLocation} />
+            {pinnedLocation && (
+              <Circle
+                center={pinnedLocation}
+                radius={200}
+                fillColor="rgba(0, 150, 255, 0.2)"
+                strokeColor="rgba(0, 150, 255, 0.5)"
+              />
+            )}
+          </MapView>
+        )}
+      </View>
+
+      <TouchableOpacity
+        style={styles.pinButton}
+        onPress={handlePinLocation}
+      >
+        <Text style={styles.pinButtonText}>Pin Current Location</Text>
+      </TouchableOpacity>
+
+      <View style={styles.statsContainer}>
+        <Text style={styles.statsTitle}>Location Statistics</Text>
+        <View style={styles.statItem}>
+          <Text>Time spent in pinned area: 2h 30m</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text>Time spent outside: 45m</Text>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  signOutButton: {
+    padding: 8,
+  },
+  icon: {
+    width: 24,
+    height: 24,
+  },
+  mapContainer: {
+    height: 300,
+    margin: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  map: {
+    flex: 1,
+  },
+  pinButton: {
+    backgroundColor: '#007AFF',
+    margin: 16,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  pinButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  statsContainer: {
+    margin: 16,
+    padding: 16,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+  },
+  statsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  statItem: {
+    padding: 8,
+    backgroundColor: '#fff',
+    marginVertical: 4,
+    borderRadius: 4,
+  },
+});

@@ -18,4 +18,25 @@ model User  {
   userName String @unique
   email String @unique
   password String  
+  locationPins LocationPin[]
+}
+
+model LocationPin {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  latitude  Float
+  longitude Float
+  radius    Float    @default(200) // in meters
+  createdAt DateTime @default(now())
+  histories LocationHistory[]
+}
+
+model LocationHistory {
+  id           Int        @id @default(autoincrement())
+  locationPinId Int
+  locationPin  LocationPin @relation(fields: [locationPinId], references: [id])
+  timeInside   Int        // stored in seconds
+  timeOutside  Int        // stored in seconds
+  date         DateTime   @default(now())
 }

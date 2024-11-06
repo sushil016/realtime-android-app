@@ -1,26 +1,24 @@
-const express = require("express")
-const app = express()
-const AdminRoute = require("./routes/myRoute")
-const signupRoute = require("./routes/myRoute")
-const signinRoute = require("./routes/myRoute")
-require("dotenv").config();
+import express from "express";
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { router as myRoute } from './routes/myRoute';
+import locationRoutes  from './routes/locationRoutes';
+
+dotenv.config();
+
+const app = express();
+
+// Enable CORS
+app.use(cors());
 app.use(express.json());
 
-import { PrismaClient } from '@prisma/client'
+// Routes
+app.use('/api/v2', myRoute);
+app.use('/api/v2', locationRoutes);
 
-const prisma = new PrismaClient({
-    log: ["query"]
-})
+const PORT = Number(process.env.PORT) || 8080;
 
-const PORT = process.env.PORT || 8000
-
-app.get("/" , (req:any, res:any )=>{res.send('Hello Worldeeee')})
-
-app.use('/api/v2', AdminRoute);
-app.use('/api/v2', signinRoute);
-app.use('/api/v2', signupRoute);
-
-app.listen(PORT , () => {
-    console.log(`server is running on  port ${PORT}`)
-})
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT}`);
+});
 

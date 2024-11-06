@@ -8,6 +8,7 @@ import CustomButton from '@/components/CustomButton'
 import Line from '@/components/Line'
 import { Link, router } from 'expo-router'
 import axios from 'axios'
+import { endpoints } from '@/utils/config'
 
 
 const Signup = () => {
@@ -18,29 +19,38 @@ const Signup = () => {
     password:""}
   )
 
-  function handleSubmit (){
-    const formData = {
-      userName :form.userName,
-      email: form.email,
-      password: form.password
+  async function handleSubmit (){
+    try {
+      setLoading(true);
+      if (!form.userName || !form.email || !form.password) {
+        Alert.alert("Error", "Please fill all details");
+        return;
+      }
 
+      const response = await axios.post(endpoints.signup, {
+        userName: form.userName,
+        email: form.email,
+        password: form.password
+      });
+
+      console.log("Response:", response.data);
+
+      if (response.data.success) {
+        Alert.alert("Success", "Account created successfully", [
+          { text: "OK", onPress: () => router.replace("/(auth)/sign-in") }
+        ]);
+      } else {
+        Alert.alert("Error", response.data.message || "Signup failed");
+      }
+    } catch (error: any) {
+      console.error("Signup error:", error.response?.data || error.message);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Unable to connect to server"
+      );
+    } finally {
+      setLoading(false);
     }
-   if (form.userName && form.email && form.password) {
-    axios
-   .post("http://192.168.1.157:8080/api/v2/signup", formData)
-   .then(res =>{
-     console.log(res.data);
-     if (res.data.success == true) {
-      router.replace("/(auth)/sign-in")
-     }else{
-      Alert.alert(JSON.stringify(res.data))
-    }
-    })
-   .catch(e => console.log(e))
-   }else{
-    Alert.alert("flease fill all details")
-   }
-   
   }
 
   return (

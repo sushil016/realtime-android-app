@@ -65,17 +65,19 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'flex-end',
     width: '100%',
+    marginTop: 20,
+    paddingRight: 20,
   },
   skipText: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginLeft: 290,
+    textDecorationLine: 'underline',
   },
   dot: {
     width: 32,
     height: 4,
     marginHorizontal: 4,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#E2E0F0',
     borderRadius: 999,
   },
   activeDot: {
@@ -119,8 +121,8 @@ const styles = StyleSheet.create({
   },
   button: {
     width: '91.666667%',
-    marginTop: 40,
-    marginBottom: 20,
+    marginTop: 20,
+    marginBottom: 40,
     marginLeft: 16,
   },
 });

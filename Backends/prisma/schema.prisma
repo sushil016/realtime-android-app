@@ -13,30 +13,89 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User  {
-  id Int @id @default(autoincrement())
-  userName String @unique
-  email String @unique
-  password String  
-  locationPins LocationPin[]
+enum UserRole {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  EARLY_DEPARTURE
+  ABSENT
+}
+
+model User {
+  id             Int           @id @default(autoincrement())
+  userName       String        @unique
+  email          String        @unique
+  password       String
+  role           UserRole      @default(EMPLOYEE)
+  department     String?
+  managerId      Int?
+  manager        User?         @relation("UserToManager", fields: [managerId], references: [id])
+  subordinates   User[]        @relation("UserToManager")
+  locationPins   LocationPin[]
+  attendances    Attendance[]
+  notifications  Notification[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model LocationPin {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  latitude  Float
-  longitude Float
-  radius    Float    @default(200) // in meters
-  createdAt DateTime @default(now())
-  histories LocationHistory[]
+  id            Int               @id @default(autoincrement())
+  userId        Int
+  user          User              @relation(fields: [userId], references: [id])
+  latitude      Float
+  longitude     Float
+  radius        Float             @default(200) // in meters
+  createdAt     DateTime          @default(now())
+  histories     LocationHistory[]
+  attendances   Attendance[]
 }
 
 model LocationHistory {
-  id           Int        @id @default(autoincrement())
+  id            Int         @id @default(autoincrement())
   locationPinId Int
-  locationPin  LocationPin @relation(fields: [locationPinId], references: [id])
-  timeInside   Int        // stored in seconds
-  timeOutside  Int        // stored in seconds
-  date         DateTime   @default(now())
+  locationPin   LocationPin @relation(fields: [locationPinId], references: [id])
+  timeInside    Int        // stored in seconds
+  timeOutside   Int        // stored in seconds
+  date          DateTime    @default(now())
+}
+
+model Attendance {
+  id              Int              @id @default(autoincrement())
+  userId          Int
+  user            User             @relation(fields: [userId], references: [id])
+  locationPinId   Int
+  locationPin     LocationPin      @relation(fields: [locationPinId], references: [id])
+  checkIn         DateTime
+  checkOut        DateTime?
+  status          AttendanceStatus @default(PRESENT)
+  workHours       Float?           // in hours
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Notification {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  title       String
+  message     String
+  isRead      Boolean   @default(false)
+  type        String    // LATE_ARRIVAL, EARLY_DEPARTURE, LOCATION_ALERT, etc.
+  createdAt   DateTime  @default(now())
+}
+
+model Settings {
+  id                    Int      @id @default(autoincrement())
+  workStartTime         String   // HH:mm format
+  workEndTime          String   // HH:mm format
+  lateThreshold        Int      // minutes
+  earlyDepartThreshold Int      // minutes
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }

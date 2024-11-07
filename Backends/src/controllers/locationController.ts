@@ -15,8 +15,8 @@ export const updateLocation = async (req: AuthRequest, res: Response) => {
     if (!req.user?.id) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
-    
-    // Get the user's active location pin
+
+    // Get the user's most recent location pin
     const locationPin = await prisma.locationPin.findFirst({
       where: {
         userId: req.user.id
@@ -61,20 +61,23 @@ export const updateLocation = async (req: AuthRequest, res: Response) => {
       if (distance <= locationPin.radius) {
         await prisma.locationHistory.update({
           where: { id: history.id },
-          data: { timeInside: history.timeInside + 60 }
+          data: { timeInside: { increment: 60 } }
         });
       } else {
         await prisma.locationHistory.update({
           where: { id: history.id },
-          data: { timeOutside: history.timeOutside + 60 }
+          data: { timeOutside: { increment: 60 } }
         });
       }
     }
 
     res.json({ success: true });
   } catch (err) {
-    const error = err as Error;
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Update location error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update location' 
+    });
   }
 };
 
@@ -89,14 +92,18 @@ export const pinLocation = async (req: AuthRequest, res: Response) => {
       data: {
         userId: req.user.id,
         latitude,
-        longitude
+        longitude,
+        radius: 200 // default radius in meters
       }
     });
 
     res.json({ success: true, locationPin });
   } catch (err) {
-    const error = err as Error;
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Pin location error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to pin location' 
+    });
   }
 };
 
@@ -109,98 +116,71 @@ export const getLocationStats = async (req: AuthRequest, res: Response) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const locationHistory = await prisma.locationHistory.findFirst({
+    // Get the most recent location pin and its history
+    const locationPin = await prisma.locationPin.findFirst({
       where: {
-        locationPin: {
-          userId: req.user.id
-        },
-        date: {
-          gte: today
+        userId: req.user.id
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      include: {
+        histories: {
+          where: {
+            date: {
+              gte: today
+            }
+          }
         }
       }
     });
 
-    if (!locationHistory) {
+    if (!locationPin || !locationPin.histories.length) {
       return res.json({
         success: true,
         stats: {
-          timeInZone: 0,
-          timeOutZone: 0,
-          percentage: 0
+          timeInside: '0h 0m',
+          timeOutside: '0h 0m',
+          percentage: 0,
+          lastUpdated: new Date()
         }
       });
     }
 
-    const totalTime = locationHistory.timeInside + locationHistory.timeOutside;
+    const history = locationPin.histories[0];
+    const timeInsideHours = Math.floor(history.timeInside / 3600);
+    const timeInsideMinutes = Math.floor((history.timeInside % 3600) / 60);
+    const timeOutsideHours = Math.floor(history.timeOutside / 3600);
+    const timeOutsideMinutes = Math.floor((history.timeOutside % 3600) / 60);
+
+    const totalTime = history.timeInside + history.timeOutside;
     const percentage = totalTime > 0 
-      ? Math.round((locationHistory.timeInside / totalTime) * 100)
+      ? Math.round((history.timeInside / totalTime) * 100)
       : 0;
 
     res.json({
       success: true,
       stats: {
-        timeInZone: locationHistory.timeInside,
-        timeOutZone: locationHistory.timeOutside,
-        percentage
+        timeInside: `${timeInsideHours}h ${timeInsideMinutes}m`,
+        timeOutside: `${timeOutsideHours}h ${timeOutsideMinutes}m`,
+        percentage,
+        lastUpdated: history.date
       }
     });
   } catch (err) {
-    const error = err as Error;
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const getWeeklyStats = async (req: AuthRequest, res: Response) => {
-  try {
-    if (!req.user?.id) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
-    }
-
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-    weekStart.setHours(0, 0, 0, 0);
-
-    const weeklyStats = await prisma.locationHistory.findMany({
-      where: {
-        locationPin: {
-          userId: req.user.id
-        },
-        date: {
-          gte: weekStart
-        }
-      },
-      orderBy: {
-        date: 'asc'
-      }
+    console.error('Get stats error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to get location stats' 
     });
-
-    const dailyBreakdown = weeklyStats.map(stat => {
-      const totalTime = stat.timeInside + stat.timeOutside;
-      const percentage = totalTime > 0 
-        ? Math.round((stat.timeInside / totalTime) * 100)
-        : 0;
-
-      return {
-        day: stat.date.toLocaleDateString('en-US', { weekday: 'long' }),
-        percentage
-      };
-    });
-
-    res.json({
-      success: true,
-      weeklyStats: {
-        dailyBreakdown
-      }
-    });
-  } catch (err) {
-    const error = err as Error;
-    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // Helper function to calculate distance between two points
-function calculateDistance(point1: { latitude: number; longitude: number }, 
-                         point2: { latitude: number; longitude: number }): number {
+function calculateDistance(
+  point1: { latitude: number; longitude: number },
+  point2: { latitude: number; longitude: number }
+): number {
   const R = 6371e3; // Earth's radius in meters
   const φ1 = point1.latitude * Math.PI/180;
   const φ2 = point2.latitude * Math.PI/180;

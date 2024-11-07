@@ -7,7 +7,7 @@ import Line from '@/components/Line'
 import { Link, router } from 'expo-router'
 import axios from 'axios'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { endpoints } from '@/utils/config'
+import { endpoints, axiosInstance } from '@/utils/config'
 
 const SignIn = () => {
   const [loading, setLoading] = useState(false);
@@ -24,25 +24,49 @@ const SignIn = () => {
         return;
       }
 
-      const response = await axios.post(endpoints.login, {
-        email: form.email,
-        password: form.password
-      });
+      const maxRetries = 3;
+      let retryCount = 0;
+      let lastError;
 
-      console.log("Login response:", response.data);
+      while (retryCount < maxRetries) {
+        try {
+          const response = await axiosInstance.post(endpoints.login, {
+            email: form.email,
+            password: form.password
+          });
 
-      if (response.data.success) {
-        await AsyncStorage.setItem('token', response.data.token);
-        await AsyncStorage.setItem('isLoggedIn', 'true');
-        router.replace("/(root)/(tabs)/home");
-      } else {
-        Alert.alert("Error", response.data.message || "Login failed");
+          if (response.data.success) {
+            await AsyncStorage.setItem('token', response.data.token);
+            await AsyncStorage.setItem('isLoggedIn', 'true');
+            router.replace("/(root)/(tabs)/home");
+            return;
+          } else {
+            Alert.alert("Error", response.data.message || "Login failed");
+            return;
+          }
+        } catch (error: any) {
+          lastError = error;
+          if (error.response) {
+            // If we got a response, don't retry
+            throw error;
+          }
+          retryCount++;
+          if (retryCount < maxRetries) {
+            // Wait before retrying (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          }
+        }
       }
+
+      // If we get here, all retries failed
+      throw lastError;
     } catch (error: any) {
-      console.error("Login error:", error.response?.data || error);
+      console.error('Login error:', error);
       Alert.alert(
         "Error",
-        error.response?.data?.message || "Unable to connect to server"
+        error.response?.data?.message || 
+        error.message || 
+        "Unable to connect to server. Please check your connection."
       );
     } finally {
       setLoading(false);

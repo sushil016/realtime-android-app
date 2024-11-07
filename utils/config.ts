@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Change this to your computer's local IP address when testing on physical device
-export const API_BASE_URL = 'http://192.168.0.106:8080/api/v2';
+export const API_BASE_URL = 'http://192.168.0.108:8080/api/v2';
 
 // Create axios instance with default config
 export const axiosInstance = axios.create({
@@ -46,10 +46,17 @@ axiosInstance.interceptors.response.use(
 );
 
 export const endpoints = {
-  login: `/login`,
-  signup: `/signup`,
-  updateLocation: `/location/update`,
-  pinLocation: `/location/pin`,
-  locationStats: `/location/stats`,
-  weeklyStats: `/location/weekly-stats`,
+  login: '/login',
+  signup: '/signup',
+  updateLocation: '/location/update',
+  pinLocation: '/location/pin',
+  locationStats: '/location/stats',
+  attendance: '/attendance',
+  notifications: '/notifications',
+  checkIn: '/attendance/check-in',
+  checkOut: '/attendance/check-out',
+  attendanceHistory: '/attendance/history',
+  profile: '/profile',
+  settings: '/settings',
+  updateSettings: '/settings'
 }; 

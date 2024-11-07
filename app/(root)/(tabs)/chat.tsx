@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     color: '#000',
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 12,
+    padding: 8,
   },
   timestamp: {
     fontSize: 10,
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    marginHorizontal: 8,
+    marginHorizontal: 1,
   },
   inputWrapper: {
     backgroundColor: '#fff',
@@ -334,7 +334,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 12,
     alignItems: 'flex-end',
-    marginBottom: 66,
   },
   input: {
     flex: 1,

@@ -11,16 +11,23 @@ interface Location {
   longitude: number;
 }
 
+interface Stats {
+  timeInside: string;
+  timeOutside: string;
+  percentage: number;
+  lastUpdated: Date;
+}
+
 export default function Home() {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
   const [pinnedLocation, setPinnedLocation] = useState<Location | null>(null);
   const [isInsideRadius, setIsInsideRadius] = useState(true);
-  const [stats, setStats] = useState({
-    timeInZone: 0,
-    timeOutZone: 0,
-    percentage: 0
+  const [stats, setStats] = useState<Stats>({
+    timeInside: '0h 0m',
+    timeOutside: '0h 0m',
+    percentage: 0,
+    lastUpdated: new Date()
   });
-  const [weeklyStats, setWeeklyStats] = useState([]);
 
   const updateCurrentLocation = async (location: Location) => {
     try {
@@ -53,16 +60,9 @@ export default function Home() {
 
   const fetchStats = async () => {
     try {
-      const [statsRes, weeklyRes] = await Promise.all([
-        axiosInstance.get(endpoints.locationStats),
-        axiosInstance.get(endpoints.weeklyStats)
-      ]);
-
+      const statsRes = await axiosInstance.get(endpoints.locationStats);
       if (statsRes.data.success) {
         setStats(statsRes.data.stats);
-      }
-      if (weeklyRes.data.success) {
-        setWeeklyStats(weeklyRes.data.weeklyStats.dailyBreakdown);
       }
     } catch (error: any) {
       console.error('Error fetching stats:', error.response?.data?.message);
@@ -163,10 +163,10 @@ export default function Home() {
         <View style={styles.statsContainer}>
           <Text style={styles.statsTitle}>Location Statistics</Text>
           <View style={styles.statItem}>
-            <Text>Time spent in pinned area: 2h 30m</Text>
+            <Text>Time spent in pinned area: {stats.timeInside}</Text>
           </View>
           <View style={styles.statItem}>
-            <Text>Time spent outside: 45m</Text>
+            <Text>Time spent outside: {stats.timeOutside}</Text>
           </View>
         </View>
 
@@ -176,42 +176,20 @@ export default function Home() {
           <View style={styles.activityCard}>
             <View style={styles.activityHeader}>
               <Text style={styles.activityTitle}>Today's Summary</Text>
-              <Text style={styles.activityTime}>Last updated 5m ago</Text>
+              <Text style={styles.activityTime}>
+                Last updated {new Date(stats.lastUpdated).toLocaleTimeString()}
+              </Text>
             </View>
             
             <View style={styles.activityStats}>
               <View style={styles.statBox}>
-                <Text style={styles.statNumber}>85%</Text>
+                <Text style={styles.statNumber}>{stats.percentage}%</Text>
                 <Text style={styles.statLabel}>In Zone</Text>
               </View>
               <View style={styles.statBox}>
-                <Text style={styles.statNumber}>15%</Text>
+                <Text style={styles.statNumber}>{100 - stats.percentage}%</Text>
                 <Text style={styles.statLabel}>Out Zone</Text>
               </View>
-            </View>
-          </View>
-
-          <Text style={styles.sectionTitle}>Weekly Report</Text>
-          <View style={styles.weeklyCard}>
-            <View style={styles.weekDay}>
-              <Text>Monday</Text>
-              <View style={[styles.progressBar, { width: '80%' }]} />
-            </View>
-            <View style={styles.weekDay}>
-              <Text>Tuesday</Text>
-              <View style={[styles.progressBar, { width: '65%' }]} />
-            </View>
-            <View style={styles.weekDay}>
-              <Text>Wednesday</Text>
-              <View style={[styles.progressBar, { width: '90%' }]} />
-            </View>
-            <View style={styles.weekDay}>
-              <Text>Thursday</Text>
-              <View style={[styles.progressBar, { width: '75%' }]} />
-            </View>
-            <View style={styles.weekDay}>
-              <Text>Friday</Text>
-              <View style={[styles.progressBar, { width: '85%' }]} />
             </View>
           </View>
         </View>

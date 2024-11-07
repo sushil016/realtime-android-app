@@ -5,15 +5,16 @@ import InputField from '@/components/InputField'
 import CustomButton from '@/components/CustomButton'
 import Line from '@/components/Line'
 import { Link, router } from 'expo-router'
-import axios from 'axios'
-import { endpoints } from '@/utils/config'
+import { axiosInstance, endpoints } from '@/utils/config'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     userName: "",
     email: "",
-    password: ""
+    password: "",
+    department: ""
   });
 
   async function handleSubmit() {
@@ -24,23 +25,32 @@ const Signup = () => {
         return;
       }
 
-      const response = await axios.post(endpoints.signup, {
+      console.log('Attempting signup with:', {
         userName: form.userName,
         email: form.email,
         password: form.password
       });
 
+      const response = await axiosInstance.post(endpoints.signup, {
+        userName: form.userName,
+        email: form.email,
+        password: form.password
+      });
+
+      console.log('Signup response:', response.data);
+
       if (response.data.success) {
-        Alert.alert("Success", "Account created successfully", [
-          { text: "OK", onPress: () => router.replace("/(auth)/sign-in") }
-        ]);
+        await AsyncStorage.setItem('token', response.data.token);
+        await AsyncStorage.setItem('isLoggedIn', 'true');
+        router.replace("/(root)/(tabs)/home");
       } else {
         Alert.alert("Error", response.data.message || "Signup failed");
       }
     } catch (error: any) {
+      console.error('Signup error:', error.response?.data || error);
       Alert.alert(
         "Error",
-        error.response?.data?.message || "Unable to connect to server"
+        error.response?.data?.message || "Network error. Please try again."
       );
     } finally {
       setLoading(false);
@@ -68,6 +78,12 @@ const Signup = () => {
             textContentType="emailAddress"
             value={form.email}
             onChangeText={(value: string) => setForm({ ...form, email: value })}
+          />
+          <InputField 
+            label="Department"
+            icon={icons.building}
+            value={form.department}
+            onChangeText={(value: string) => setForm({ ...form, department: value })}
           />
           <InputField 
             label="Password"

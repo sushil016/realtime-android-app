@@ -1,11 +1,9 @@
 import express from 'express';
-import { auth, logins } from '../controllers/auth';
+import { login, signup } from '../controllers/auth';
 
-export const router = express.Router();
+const router = express.Router();
 
-router.post('/login', logins);
-router.post('/signup', auth);
+router.post('/signup', signup);
+router.post('/login', login);
 
-router.get('/blog', (req: express.Request, res: express.Response) => {
-    res.send({ msg: 'Blog Page' });
-});
+export { router };

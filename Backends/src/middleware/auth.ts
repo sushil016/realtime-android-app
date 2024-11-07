@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 interface AuthRequest extends Request {
   user?: {
     id: number;
+    role: UserRole;
   };
 }
 
@@ -24,7 +25,10 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: number };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { 
+      id: number;
+      role: UserRole;
+    };
     
     // Verify user exists in database
     const user = await prisma.user.findUnique({
@@ -38,7 +42,10 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
       });
     }
 
-    req.user = { id: decoded.id };
+    req.user = { 
+      id: decoded.id,
+      role: user.role
+    };
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);

@@ -1,7 +1,6 @@
-import { View, Text, Image, Alert, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, Alert, StyleSheet, Image } from 'react-native'
 import React, { useState } from 'react'
-import { ScrollView } from 'react-native'
-import { icons, images } from '@/constants'
+import { icons } from '@/constants'
 import InputField from '@/components/InputField'
 import CustomButton from '@/components/CustomButton'
 import Line from '@/components/Line'
@@ -30,7 +29,7 @@ const SignIn = () => {
         password: form.password
       });
 
-      console.log("Response:", response.data);
+      console.log("Login response:", response.data);
 
       if (response.data.success) {
         await AsyncStorage.setItem('token', response.data.token);
@@ -40,7 +39,7 @@ const SignIn = () => {
         Alert.alert("Error", response.data.message || "Login failed");
       }
     } catch (error: any) {
-      console.error("Login error:", error.response?.data || error.message);
+      console.error("Login error:", error.response?.data || error);
       Alert.alert(
         "Error",
         error.response?.data?.message || "Unable to connect to server"
@@ -53,14 +52,9 @@ const SignIn = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
-        <View style={styles.imageContainer}>
-          <Image 
-            source={images.signUpCar}
-            style={styles.image}
-          />
-          <Text style={styles.headerText}>
-            Enter your Credentials to proceed
-          </Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Welcome Back!</Text>
+          <Text style={styles.subtitle}>Sign in to continue</Text>
         </View>
 
         <View style={styles.formContainer}>
@@ -69,7 +63,7 @@ const SignIn = () => {
             icon={icons.email}
             textContentType="emailAddress"
             value={form.email}
-            onChangeText={(value) => setForm({ ...form, email: value })}
+            onChangeText={(value: string) => setForm({ ...form, email: value })}
           />
           <InputField 
             label="Password"
@@ -77,8 +71,10 @@ const SignIn = () => {
             secureTextEntry={true}
             textContentType="password"
             value={form.password}
-            onChangeText={(value) => setForm({ ...form, password: value })}
+            onChangeText={(value: string) => setForm({ ...form, password: value })}
           />
+          
+          <Text style={styles.forgotPassword}>Forgot Password?</Text>
         </View>
 
         <CustomButton 
@@ -88,23 +84,22 @@ const SignIn = () => {
           loading={loading}
         />
         
-        <Line />
+        <Line label="or continue with" />
 
         <CustomButton
           title="Login with Google"
           style={styles.googleButton}
           IconLeft={() => (
-            <Image
-              source={icons.google}
-              style={styles.googleIcon}
-            />
+            <View style={styles.googleIconContainer}>
+              <Image source={icons.google} style={styles.googleIcon} />
+            </View>
           )}
           bgVariant="outline"
           textVariant="primary"
         />
 
         <View style={styles.footer}>
-          <Text>
+          <Text style={styles.footerText}>
             Don't Have an account?{" "}
             <Link href="/(auth)/sign-up" style={styles.link}>
               Sign-up
@@ -119,54 +114,59 @@ const SignIn = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    
     backgroundColor: '#fff',
   },
   content: {
     flex: 1,
+    padding: 24,
+    paddingTop: 128,
   },
-  imageContainer: {
-    width: '100%',
-    height: 250,
-    backgroundColor: '#fff',
-    position: 'relative',
+  header: {
+    marginBottom: 32,
   },
-  image: {
-    width: '100%',
-    height: 250,
-    zIndex: 0,
-  },
-  headerText: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    fontSize: 20,
+  title: {
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
   },
   formContainer: {
-    padding: 16,
+    marginBottom: 24,
+  },
+  forgotPassword: {
+    textAlign: 'right',
+    color: '#007AFF',
+    marginTop: 8,
   },
   loginButton: {
-    paddingVertical: 16,
-    width: 300,
-    marginLeft: 32,
-    marginVertical: 16,
+    marginTop: 8,
   },
   googleButton: {
-    marginVertical: 20,
-    width: 300,
-    marginLeft: 32,
+    marginTop: 24,
+    backgroundColor: "#fff",
+  },
+  googleIconContainer: {
+    marginRight: 8,
   },
   googleIcon: {
     width: 20,
     height: 20,
-    marginHorizontal: 8,
   },
   footer: {
+    marginTop: 40,
     alignItems: 'center',
+  },
+  footerText: {
+    color: '#666',
   },
   link: {
     color: '#007AFF',
+    fontWeight: '600',
   },
 });
 

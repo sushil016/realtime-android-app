@@ -25,4 +25,25 @@ const images = {
   signUpCar: require('../assets/images/signup-car.png'), // Make sure this image exists
 } as { [key: string]: ImageSourcePropType };
 
+export const onboarding = [
+  {
+    id: "1",
+    title: "Track Your Location",
+    description: "Keep track of your location and stay within your designated zones",
+    image: images.signUpCar // or any other relevant image from your assets
+  },
+  {
+    id: "2",
+    title: "Stay Connected",
+    description: "Get real-time updates and notifications about your location status",
+    image: images.signUpCar // replace with appropriate image
+  },
+  {
+    id: "3",
+    title: "View Statistics",
+    description: "Access detailed statistics about your location history and patterns",
+    image: images.signUpCar // replace with appropriate image
+  }
+];
+
 export { icons, images };

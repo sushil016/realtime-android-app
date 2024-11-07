@@ -2,7 +2,7 @@ import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import { icons } from "@/constants";
 import { Stack } from "expo-router";
 import { Tabs } from 'expo-router';
-import { Image, ImageSourcePropType, View } from "react-native";
+import { Image, ImageSourcePropType, View, StyleSheet } from "react-native";
 
 const TabIcon = ({
   source,
@@ -12,21 +12,42 @@ const TabIcon = ({
   focused: boolean;
 }) => (
   <View
-    className={`flex flex-row justify-center items-center rounded-full ${focused ? "bg-general-300" : ""}`}
+    style={{
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 40,
+      backgroundColor: focused ? "#0286FF" : "#0286FF",
+      
+    }}
   >
     <View
-      className={`rounded-full w-12 h-12 items-center justify-center ${focused ? "bg-orange-400" : ""}`}
+      style={{
+        borderRadius: 40,
+        width: 20,
+        height: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: focused ? "#0286FF" : undefined,
+      }}
     >
       <Image
         source={source}
         tintColor="white"
         resizeMode="contain"
-        className="w-4 h-4"
+        style={styles.icon}
       />
     </View>
   </View>
 );
 
+const styles = StyleSheet.create({
+  icon: {
+    width: 24,
+    height: 24,
+    color: "blue",
+  },
+});
 
 export default function Layout() {
 
@@ -43,7 +64,7 @@ export default function Layout() {
         borderRadius:1,
        overflow: "hidden",
        height: 70,
-       paddingBottom: 45,
+       paddingBottom: 4,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",

@@ -2,14 +2,19 @@ import express from "express";
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { router as myRoute } from './routes/myRoute';
-import locationRoutes  from './routes/locationRoutes';
+import locationRoutes from './routes/locationRoutes';
 
 dotenv.config();
 
 const app = express();
 
-// Enable CORS
-app.use(cors());
+// Enable CORS with specific options
+app.use(cors({
+  origin: '*', // In production, replace with your frontend domain
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // Routes

@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   messagesList: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 2,
   },
   messageContainer: {
     flexDirection: 'row',
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 12,
     alignItems: 'flex-end',
-    marginBottom: 100,
+    marginBottom: 66,
   },
   input: {
     flex: 1,

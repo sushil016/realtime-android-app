@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image } from 'react-native'
+import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native'
 import React, { useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
@@ -13,37 +13,31 @@ const welcome = () => {
     const [activeIndex, setActiveIndex] = useState(0)
     const isLastSlide = activeIndex === onboarding.length - 1;
   return (
-    <SafeAreaView className="flex h-full justify-between bg-slate-200">
-        <TouchableOpacity onPress={()=>{router.replace(href= "/(auth)/sign-up")}}
-           classname="items-end flex justify-end w-full" >
-            <Text className="text-xl font-JakartaBold ml-[290px] ">Skip</Text>
+    <SafeAreaView style={styles.container}>
+        <TouchableOpacity 
+          onPress={() => router.replace("/(auth)/sign-up")}
+          style={styles.skipButton}
+        >
+          <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
         <Swiper
         ref={swiperRef}
         loop={false}
-        dot={
-            <View className="w-[32px] h-[4px] mx-1 bg-[#E2E8F0] rounded-full" />
-          }
-          activeDot={
-            <View className="w-[32px] h-[4px] mx-1 bg-[#0286FF] rounded-full" />
-          }
-          onIndexChanged={(index) => setActiveIndex(index)}
+        dot={<View style={styles.dot} />}
+        activeDot={<View style={styles.activeDot} />}
+        onIndexChanged={(index) => setActiveIndex(index)}
         >
-              {onboarding.map((item) => (
-          <View key={item.id} className="flex items-center justify-center p-5">
+              {onboarding.map((item: { id: string; image: any; title: string; description: string; }) => (
+          <View key={item.id} style={styles.slide}>
             <Image
               source={item.image}
-              className="w-full h-[300px]"
+              style={styles.slideImage}
               resizeMode="contain"
             />
-            <View className="flex flex-row items-center justify-center w-full mt-10">
-              <Text className="text-black text-3xl font-bold mx-10 text-center">
-                {item.title}
-              </Text>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>{item.title}</Text>
             </View>
-            <Text className="text-md font-JakartaSemiBold text-center text-[#858585] mx-10 mt-3">
-              {item.description}
-            </Text>
+            <Text style={styles.description}>{item.description}</Text>
           </View>
         ))}
 
@@ -55,10 +49,80 @@ const welcome = () => {
             ? router.replace("/(auth)/sign-up")
             : swiperRef.current?.scrollBy(1)
         }
-        className="w-11/12 mt-10 mb-5 ml-4"
+        style={styles.button}
       />
     </SafeAreaView>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'space-between',
+    backgroundColor: '#E2E8F0',
+  },
+  skipButton: {
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
+    width: '100%',
+  },
+  skipText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: 290,
+  },
+  dot: {
+    width: 32,
+    height: 4,
+    marginHorizontal: 4,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 999,
+  },
+  activeDot: {
+    width: 32,
+    height: 4,
+    marginHorizontal: 4,
+    backgroundColor: '#0286FF',
+    borderRadius: 999,
+  },
+  slide: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  slideImage: {
+    width: '100%',
+    height: 300,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginTop: 40,
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginHorizontal: 40,
+    color: '#000',
+  },
+  description: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#858585',
+    marginHorizontal: 40,
+    marginTop: 12,
+  },
+  button: {
+    width: '91.666667%',
+    marginTop: 40,
+    marginBottom: 20,
+    marginLeft: 16,
+  },
+});
 
 export default welcome

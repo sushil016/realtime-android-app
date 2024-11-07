@@ -1,14 +1,17 @@
 import express from 'express';
+import { authenticateToken } from '../middleware/auth';
 import { 
-  pinLocation,
-  updateLocationHistory,
-  getLocationHistory 
+  updateLocation, 
+  pinLocation, 
+  getLocationStats,
+  getWeeklyStats 
 } from '../controllers/locationController';
 
 const router = express.Router();
 
-router.post('/location/pin', pinLocation);
-router.post('/location/history', updateLocationHistory);
-router.get('/location/history/:userId', getLocationHistory);
+router.post('/location/update', authenticateToken, updateLocation);
+router.post('/location/pin', authenticateToken, pinLocation);
+router.get('/location/stats', authenticateToken, getLocationStats);
+router.get('/location/weekly-stats', authenticateToken, getWeeklyStats);
 
 export default router; 

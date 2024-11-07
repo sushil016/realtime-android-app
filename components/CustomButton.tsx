@@ -1,34 +1,33 @@
-import { TouchableOpacity, Text } from "react-native";
-
+import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
 import { ButtonProps } from "@/types/type";
 
 const getBgVariantStyle = (variant: ButtonProps["bgVariant"]) => {
   switch (variant) {
     case "secondary":
-      return "bg-gray-500";
+      return styles.secondaryBg;
     case "danger":
-      return "bg-red-500";
+      return styles.dangerBg;
     case "success":
-      return "bg-green-500";
+      return styles.successBg;
     case "outline":
-      return "bg-transparent border-neutral-300 border-[0.5px]";
+      return styles.outlineBg;
     default:
-      return "bg-[#0286FF]";
+      return styles.primaryBg;
   }
 };
 
 const getTextVariantStyle = (variant: ButtonProps["textVariant"]) => {
   switch (variant) {
     case "primary":
-      return "text-black";
+      return styles.primaryText;
     case "secondary":
-      return "text-gray-100";
+      return styles.secondaryText;
     case "danger":
-      return "text-red-100";
+      return styles.dangerText;
     case "success":
-      return "text-green-100";
+      return styles.successText;
     default:
-      return "text-white";
+      return styles.defaultText;
   }
 };
 
@@ -39,22 +38,81 @@ const CustomButton = ({
   textVariant = "default",
   IconLeft,
   IconRight,
-  className,
+  style,
+  loading = false,
   ...props
 }: ButtonProps) => {
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`w-full rounded-full p-3 flex flex-row justify-center items-center shadow-md shadow-neutral-400/70 ${getBgVariantStyle(bgVariant)} ${className}`}
+      style={[styles.button, getBgVariantStyle(bgVariant), style]}
+      disabled={loading}
       {...props}
     >
-      {IconLeft && <IconLeft />}
-      <Text className={`text-lg font-bold ${getTextVariantStyle(textVariant)}`}>
-        {title}
-      </Text>
-      {IconRight && <IconRight />}
+      <View style={styles.contentContainer}>
+        {IconLeft && <IconLeft />}
+        <Text style={[styles.text, getTextVariantStyle(textVariant)]}>
+          {loading ? "Loading..." : title}
+        </Text>
+        {IconRight && <IconRight />}
+      </View>
     </TouchableOpacity>
   );
 };
+
+const styles = StyleSheet.create({
+  button: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  contentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  primaryBg: {
+    backgroundColor: '#0286FF',
+  },
+  secondaryBg: {
+    backgroundColor: '#64748B',
+  },
+  dangerBg: {
+    backgroundColor: '#EF4444',
+  },
+  successBg: {
+    backgroundColor: '#10B981',
+  },
+  outlineBg: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  defaultText: {
+    color: '#FFFFFF',
+  },
+  primaryText: {
+    color: '#1a1a1a',
+  },
+  secondaryText: {
+    color: '#F8FAFC',
+  },
+  dangerText: {
+    color: '#FEE2E2',
+  },
+  successText: {
+    color: '#ECFDF5',
+  },
+});
 
 export default CustomButton;

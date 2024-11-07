@@ -22,9 +22,11 @@ export default function Index() {
   },[])
   // const { isSignedIn } = useAuth();
 
-  // if (isLoggedIn) return <Redirect href="/(root)/(tabs)/home" />
-
-  return isLoggedIn? <Redirect href="/(root)/(tabs)/home" /> : <Redirect href="/(root)/(tabs)/home"/>
+  return isLoggedIn ? (
+    <Redirect href="/(root)/(tabs)/home" />
+  ) : (
+    <Redirect href="/(auth)/welcome" />
+  );
   
   //<Redirect href="/(auth)/sign-up" />
     // <SafeAreaView>

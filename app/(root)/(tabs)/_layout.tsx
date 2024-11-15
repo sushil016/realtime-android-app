@@ -26,12 +26,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="attendance"
+        name="history"
         options={{
-          tabBarLabel: "Attendance",
+          tabBarLabel: "History",
           tabBarIcon: ({ focused }) => (
             <Image 
-              source={icons.check}
+              source={icons.history}
               style={{
                 width: 24,
                 height: 24,
@@ -64,22 +64,6 @@ export default function TabLayout() {
           tabBarIcon: ({ focused }) => (
             <Image 
               source={icons.user}
-              style={{
-                width: 24,
-                height: 24,
-                tintColor: focused ? '#0286FF' : '#64748B'
-              }}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          tabBarLabel: "History",
-          tabBarIcon: ({ focused }) => (
-            <Image 
-              source={icons.history}
               style={{
                 width: 24,
                 height: 24,

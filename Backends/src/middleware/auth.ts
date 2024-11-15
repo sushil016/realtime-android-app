@@ -27,7 +27,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { 
       id: number;
-      role: UserRole;
+      role: string;
     };
     
     // Verify user exists in database
@@ -44,7 +44,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
 
     req.user = { 
       id: decoded.id,
-      role: user.role
+      role: decoded.role as UserRole
     };
     next();
   } catch (error) {

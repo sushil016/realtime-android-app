@@ -1,0 +1,1 @@
+// Delete this file as it's no longer needed - the schema is defined in prisma/schema.prisma 

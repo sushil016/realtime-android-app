@@ -37,38 +37,22 @@ export const updateLocation = async (req: AuthRequest, res: Response) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      let history = await prisma.locationHistory.findFirst({
+      const locationHistory = await prisma.locationHistory.upsert({
         where: {
+          id: locationPin.id,
+          date: today
+        },
+        create: {
           locationPinId: locationPin.id,
-          date: {
-            gte: today
-          }
+          timeInside: distance <= locationPin.radius ? 60 : 0,
+          timeOutside: distance <= locationPin.radius ? 0 : 60,
+          date: today
+        },
+        update: {
+          timeInside: distance <= locationPin.radius ? { increment: 60 } : undefined,
+          timeOutside: distance > locationPin.radius ? { increment: 60 } : undefined
         }
       });
-
-      if (!history) {
-        history = await prisma.locationHistory.create({
-          data: {
-            locationPinId: locationPin.id,
-            timeInside: 0,
-            timeOutside: 0,
-            date: today
-          }
-        });
-      }
-
-      // Update time spent (adding 60 seconds = 1 minute)
-      if (distance <= locationPin.radius) {
-        await prisma.locationHistory.update({
-          where: { id: history.id },
-          data: { timeInside: { increment: 60 } }
-        });
-      } else {
-        await prisma.locationHistory.update({
-          where: { id: history.id },
-          data: { timeOutside: { increment: 60 } }
-        });
-      }
     }
 
     res.json({ success: true });

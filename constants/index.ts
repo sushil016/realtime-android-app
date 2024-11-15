@@ -17,7 +17,11 @@ const icons = {
   point: require('../assets/icons/point.png'),
   person: require('../assets/icons/person.png'),
   search: require('../assets/icons/search.png'),
-  out: require('../assets/icons/back-arrow.png'), // You might want to add a proper logout icon
+  out: require('../assets/icons/logout.png'),
+  building: require('../assets/icons/building.png'),
+  history: require('../assets/icons/history.png'),
+  bell: require('../assets/icons/bell.png'),
+  user: require('../assets/icons/user.png'),
 } as { [key: string]: ImageSourcePropType };
 
 // Add your images
@@ -45,5 +49,10 @@ export const onboarding = [
     image: images.signUpCar // replace with appropriate image
   }
 ];
+
+export const endpoints = {
+  // ... other endpoints
+  activities: '/api/activities', // Update this to match your backend route
+};
 
 export { icons, images };

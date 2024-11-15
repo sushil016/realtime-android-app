@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient, UserRole } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import axios from 'axios';
 
 const prisma = new PrismaClient();
 
@@ -127,6 +128,59 @@ export const login = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error'
+    });
+  }
+};
+
+export const googleAuth = async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+
+    // Verify the token with Google
+    const googleResponse = await axios.get(
+      `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`
+    );
+
+    const { email, name, sub: googleId } = googleResponse.data;
+
+    // Find or create user
+    let user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email,
+          userName: name,
+          password: '', // Google users don't need a password
+          role: UserRole.EMPLOYEE
+        }
+      });
+    }
+
+    // Generate JWT token
+    const jwtToken = jwt.sign(
+      { id: user.id, role: user.role },
+      process.env.JWT_SECRET as string,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      token: jwtToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        userName: user.userName,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to authenticate with Google'
     });
   }
 };

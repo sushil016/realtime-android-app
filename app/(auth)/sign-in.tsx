@@ -1,13 +1,13 @@
 import { View, Text, ScrollView, Alert, StyleSheet, Image } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { icons } from '@/constants'
 import InputField from '@/components/InputField'
 import CustomButton from '@/components/CustomButton'
 import Line from '@/components/Line'
 import { Link, router } from 'expo-router'
-import axios from 'axios'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { endpoints, axiosInstance } from '@/utils/config'
+import { setToken } from '@/utils/auth'
 
 const SignIn = () => {
   const [loading, setLoading] = useState(false);
@@ -15,6 +15,23 @@ const SignIn = () => {
     email: "",
     password: ""
   });
+
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
+
+  const checkLoginStatus = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+      
+      if (token && isLoggedIn === 'true') {
+        router.replace("/(root)/(tabs)/home");
+      }
+    } catch (error) {
+      console.error('Error checking login status:', error);
+    }
+  };
 
   async function SigninPressHandler() {
     try {
@@ -24,49 +41,36 @@ const SignIn = () => {
         return;
       }
 
-      const maxRetries = 3;
-      let retryCount = 0;
-      let lastError;
+      const response = await axiosInstance.post(endpoints.login, {
+        email: form.email,
+        password: form.password
+      });
 
-      while (retryCount < maxRetries) {
-        try {
-          const response = await axiosInstance.post(endpoints.login, {
-            email: form.email,
-            password: form.password
-          });
+      if (response.data.success) {
+        const { token, user } = response.data;
+        
+        // Use the auth utility function to store token
+        await setToken(token);
+        
+        // Store user data and login status
+        await Promise.all([
+          AsyncStorage.setItem('userData', JSON.stringify(user)),
+          AsyncStorage.setItem('isLoggedIn', 'true')
+        ]);
 
-          if (response.data.success) {
-            await AsyncStorage.setItem('token', response.data.token);
-            await AsyncStorage.setItem('isLoggedIn', 'true');
-            router.replace("/(root)/(tabs)/home");
-            return;
-          } else {
-            Alert.alert("Error", response.data.message || "Login failed");
-            return;
-          }
-        } catch (error: any) {
-          lastError = error;
-          if (error.response) {
-            // If we got a response, don't retry
-            throw error;
-          }
-          retryCount++;
-          if (retryCount < maxRetries) {
-            // Wait before retrying (exponential backoff)
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-          }
-        }
+        // Set the token in axios headers
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        // Navigate to home
+        router.replace("/(root)/(tabs)/home");
+      } else {
+        Alert.alert("Error", response.data.message || "Login failed");
       }
-
-      // If we get here, all retries failed
-      throw lastError;
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Login error:', error.response?.data || error.message);
       Alert.alert(
         "Error",
-        error.response?.data?.message || 
-        error.message || 
-        "Unable to connect to server. Please check your connection."
+        error.response?.data?.message || "Invalid credentials or network error"
       );
     } finally {
       setLoading(false);

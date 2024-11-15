@@ -6,7 +6,8 @@ import CustomButton from '@/components/CustomButton'
 import Line from '@/components/Line'
 import { Link, router } from 'expo-router'
 import { axiosInstance, endpoints } from '@/utils/config'
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { setToken } from '@/utils/auth'
 
 const Signup = () => {
   const [loading, setLoading] = useState(false);
@@ -25,32 +26,41 @@ const Signup = () => {
         return;
       }
 
-      console.log('Attempting signup with:', {
-        userName: form.userName,
-        email: form.email,
-        password: form.password
-      });
-
       const response = await axiosInstance.post(endpoints.signup, {
         userName: form.userName,
         email: form.email,
-        password: form.password
+        password: form.password,
+        department: form.department
       });
 
-      console.log('Signup response:', response.data);
-
       if (response.data.success) {
-        await AsyncStorage.setItem('token', response.data.token);
-        await AsyncStorage.setItem('isLoggedIn', 'true');
+        const { token, user } = response.data;
+        
+        // Use the auth utility function to store token
+        await setToken(token);
+        
+        // Store user data and login status
+        await Promise.all([
+          AsyncStorage.setItem('userData', JSON.stringify(user)),
+          AsyncStorage.setItem('isLoggedIn', 'true')
+        ]);
+
+        // Set the token in axios headers
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        // Navigate to home
         router.replace("/(root)/(tabs)/home");
       } else {
         Alert.alert("Error", response.data.message || "Signup failed");
       }
     } catch (error: any) {
-      console.error('Signup error:', error.response?.data || error);
+      console.error('Signup error:', {
+        message: error.message,
+        response: error.response?.data
+      });
       Alert.alert(
         "Error",
-        error.response?.data?.message || "Network error. Please try again."
+        error.response?.data?.message || "Registration failed. Please try again."
       );
     } finally {
       setLoading(false);

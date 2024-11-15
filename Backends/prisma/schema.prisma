@@ -33,6 +33,15 @@ model User {
   password       String
   role           UserRole      @default(EMPLOYEE)
   department     String?
+  phoneNumber    String?
+  collegeName    String?
+  organization   String?
+  bio            String?
+  avatar         String?       // URL to profile picture
+  address        String?
+  city           String?
+  country        String?
+  joinedDate     DateTime      @default(now())
   managerId      Int?
   manager        User?         @relation("UserToManager", fields: [managerId], references: [id])
   subordinates   User[]        @relation("UserToManager")

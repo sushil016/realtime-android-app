@@ -1,12 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, ScrollView, Image, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { 
+  Text, 
+  View, 
+  ScrollView, 
+  Image, 
+  TouchableOpacity, 
+  Alert, 
+  StyleSheet,
+  Dimensions,
+  Platform 
+} from 'react-native';
 import MapView, { Circle, Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { icons } from '@/constants';
 import { axiosInstance, endpoints } from '@/utils/config';
+import { LineChart } from 'react-native-chart-kit';
+import * as Notifications from 'expo-notifications';
+import { setupLocationTracking } from '@/utils/locationTrackingService';
 
-interface Location {
+// Set up notifications
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+interface LocationData {
   latitude: number;
   longitude: number;
 }
@@ -16,20 +38,92 @@ interface Stats {
   timeOutside: string;
   percentage: number;
   lastUpdated: Date;
+  historicalData?: {
+    date: string;
+    percentage: number;
+  }[];
 }
 
 export default function Home() {
-  const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
-  const [pinnedLocation, setPinnedLocation] = useState<Location | null>(null);
-  const [isInsideRadius, setIsInsideRadius] = useState(true);
+  const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
+  const [pinnedLocation, setPinnedLocation] = useState<LocationData | null>(null);
+  const [customRadius, setCustomRadius] = useState(200); // Default radius in meters
   const [stats, setStats] = useState<Stats>({
     timeInside: '0h 0m',
     timeOutside: '0h 0m',
     percentage: 0,
-    lastUpdated: new Date()
+    lastUpdated: new Date(),
+    historicalData: []
   });
+  const [isInsideZone, setIsInsideZone] = useState(false);
 
-  const updateCurrentLocation = async (location: Location) => {
+  useEffect(() => {
+    registerForPushNotifications();
+    setupLocationTracking();
+    return () => {
+      // Cleanup
+    };
+  }, []);
+
+  const registerForPushNotifications = async () => {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('location-alerts', {
+        name: 'Location Alerts',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+      });
+    }
+
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Please enable notifications to receive location alerts.');
+    }
+  };
+
+  const sendNotification = async (title: string, body: string) => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data: { type: 'location-alert' },
+      },
+      trigger: null,
+    });
+  };
+
+  const checkZoneStatus = (location: LocationData) => {
+    if (!pinnedLocation) return;
+
+    const distance = calculateDistance(location, pinnedLocation);
+    const newIsInsideZone = distance <= customRadius;
+
+    if (newIsInsideZone !== isInsideZone) {
+      sendNotification(
+        newIsInsideZone ? 'Entered Zone' : 'Left Zone',
+        newIsInsideZone 
+          ? 'You have entered your pinned location zone'
+          : 'You have left your pinned location zone'
+      );
+      setIsInsideZone(newIsInsideZone);
+    }
+  };
+
+  const calculateDistance = (loc1: LocationData, loc2: LocationData) => {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = (loc1.latitude * Math.PI) / 180;
+    const φ2 = (loc2.latitude * Math.PI) / 180;
+    const Δφ = ((loc2.latitude - loc1.latitude) * Math.PI) / 180;
+    const Δλ = ((loc2.longitude - loc1.longitude) * Math.PI) / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  };
+
+  const updateCurrentLocation = async (location: LocationData) => {
     try {
       await axiosInstance.post(endpoints.updateLocation, {
         latitude: location.latitude,
@@ -160,6 +254,24 @@ export default function Home() {
           <Text style={styles.pinButtonText}>Pin Current Location</Text>
         </TouchableOpacity>
 
+        <View style={styles.radiusControl}>
+          <Text style={styles.radiusLabel}>Zone Radius: {customRadius}m</Text>
+          <View style={styles.radiusButtons}>
+            <TouchableOpacity 
+              style={styles.radiusButton}
+              onPress={() => setCustomRadius(prev => Math.max(100, prev - 100))}
+            >
+              <Text style={styles.radiusButtonText}>-</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.radiusButton}
+              onPress={() => setCustomRadius(prev => Math.min(1000, prev + 100))}
+            >
+              <Text style={styles.radiusButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <View style={styles.statsContainer}>
           <Text style={styles.statsTitle}>Location Statistics</Text>
           <View style={styles.statItem}>
@@ -195,11 +307,37 @@ export default function Home() {
         </View>
         
         <View style={{ height: 20 }} />
+
+        {stats.historicalData && stats.historicalData.length > 0 && (
+          <View style={styles.chartContainer}>
+            <Text style={styles.chartTitle}>Weekly Activity</Text>
+            <LineChart
+              data={{
+                labels: stats.historicalData.map(d => d.date),
+                datasets: [{
+                  data: stats.historicalData.map(d => d.percentage)
+                }]
+              }}
+              width={Dimensions.get('window').width - 32}
+              height={220}
+              chartConfig={{
+                backgroundColor: '#fff',
+                backgroundGradientFrom: '#fff',
+                backgroundGradientTo: '#fff',
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(2, 134, 255, ${opacity})`,
+                style: {
+                  borderRadius: 16
+                }
+              }}
+              style={styles.chart}
+            />
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -319,5 +457,51 @@ const styles = StyleSheet.create({
     height: 8,
     backgroundColor: '#007AFF',
     borderRadius: 4,
+  },
+  radiusControl: {
+    margin: 16,
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    elevation: 2,
+  },
+  radiusLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  radiusButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  radiusButton: {
+    backgroundColor: '#0286FF',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radiusButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  chartContainer: {
+    margin: 16,
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    elevation: 2,
+  },
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  chart: {
+    marginVertical: 8,
+    borderRadius: 16,
   },
 });

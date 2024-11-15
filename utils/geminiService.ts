@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { EXPO_PUBLIC_GEMINI_API_KEY } from '@env';
+import { API_URL } from '@env';
 
 // Initialize the model with the API key from .env
-const genAI = new GoogleGenerativeAI(EXPO_PUBLIC_GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(API_URL);
 
 // Create a more robust chat model
 const model = genAI.getGenerativeModel({ 
@@ -31,7 +31,7 @@ const chat = model.startChat({
 
 export const generateResponse = async (prompt: string) => {
   try {
-    if (!EXPO_PUBLIC_GEMINI_API_KEY) {
+    if (!API_URL) {
       throw new Error('Gemini API key is not configured');
     }
 

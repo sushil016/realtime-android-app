@@ -1,71 +1,120 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
-import { format } from 'date-fns'; // Import date-fns for formatting
+import { PrismaClient, Activity, Attendance } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Define the extended Request type with user
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string | number;
-    // add other user properties as needed
-  };
+interface ActivityWithAttendance extends Activity {
+  attendance: Attendance | null;
 }
 
-export const getActivities = async (req: AuthenticatedRequest, res: Response) => {
+export const getActivities = async (req: Request, res: Response) => {
   try {
-    const { filter } = req.query;
-    const userId = req.user?.id;
+    const { filter = 'day' } = req.query;
+    const userId = (req as any).user.id;
 
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'User not authenticated'
-      });
-    }
+    // Get activities with attendance records
+    const activities = await prisma.activity.findMany({
+      where: {
+        userId: userId,
+        createdAt: {
+          gte: getDateFilter(filter as string)
+        }
+      },
+      include: {
+        attendance: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
 
-    let startDate = new Date();
-    
-    switch(filter) {
-      case 'week':
-        startDate.setDate(startDate.getDate() - 7);
-        break;
-      case 'month':
-        startDate.setMonth(startDate.getMonth() - 1);
-        break;
-      default: // day
-        startDate.setHours(0, 0, 0, 0);
-        break;
-    }
+    // Calculate weekly stats
+    const weeklyStats = await calculateWeeklyStats(userId);
 
-    // const activities = await prisma.activity.findMany({
-    //   where: {
-    //     userId: userId,
-    //     date: {
-    //       gte: startDate
-    //     }
-    //   },
-    //   orderBy: {
-    //     date: 'desc'
-    //   }
-    // });
-
-    // const weeklyStats = {
-    //   labels: activities.map((activity: { date: string; percentage: number }) => format(new Date(activity.date), 'MM/dd')),
-    //   data: activities.map((activity: { date: string; percentage: number }) => activity.percentage)
-    // };
-
-    // return res.status(200).json({
-    //   success: true,
-    //   activities,
-    //   weeklyStats
-    // });
-
+    res.json({
+      success: true,
+      activities: activities.map((activity: ActivityWithAttendance) => ({
+        id: activity.id,
+        date: activity.createdAt,
+        timeInside: activity.timeInZone,
+        timeOutside: activity.timeOutZone,
+        percentage: calculatePercentage(activity.timeInZone, activity.timeOutZone),
+        status: activity.isInZone ? 'IN_ZONE' : 'OUT_ZONE',
+        attendance: activity.attendance ? {
+          checkIn: activity.attendance.checkIn,
+          checkOut: activity.attendance.checkOut,
+          status: activity.attendance.status
+        } : null
+      })),
+      weeklyStats
+    });
   } catch (error) {
     console.error('Get activities error:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Failed to fetch activities'
     });
   }
+};
+
+const getDateFilter = (filter: string): Date => {
+  const now = new Date();
+  switch (filter) {
+    case 'week':
+      now.setDate(now.getDate() - 7);
+      break;
+    case 'month':
+      now.setMonth(now.getMonth() - 1);
+      break;
+    default: // day
+      now.setHours(0, 0, 0, 0);
+  }
+  return now;
+};
+
+const calculatePercentage = (timeIn: number, timeOut: number): number => {
+  const total = timeIn + timeOut;
+  return total === 0 ? 0 : Math.round((timeIn / total) * 100);
+};
+
+const calculateWeeklyStats = async (userId: number) => {
+  const lastWeek = new Date();
+  lastWeek.setDate(lastWeek.getDate() - 7);
+
+  const weeklyData = await prisma.activity.groupBy({
+    by: ['createdAt'],
+    where: {
+      userId,
+      createdAt: {
+        gte: lastWeek
+      }
+    },
+    _sum: {
+      timeInZone: true,
+      timeOutZone: true
+    }
+  });
+
+  const labels: string[] = [];
+  const data: number[] = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dayData = weeklyData.find(d => 
+      new Date(d.createdAt).toDateString() === date.toDateString()
+    );
+
+    labels.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
+    if (dayData && dayData._sum.timeInZone && dayData._sum.timeOutZone) {
+      data.push(calculatePercentage(
+        dayData._sum.timeInZone,
+        dayData._sum.timeOutZone
+      ));
+    } else {
+      data.push(0);
+    }
+  }
+
+  return { labels, data };
 }; 

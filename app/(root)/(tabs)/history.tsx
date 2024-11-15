@@ -25,6 +25,11 @@ interface Activity {
   timeOutside: number;
   percentage: number;
   status: 'IN_ZONE' | 'OUT_ZONE';
+  attendance?: {
+    checkIn: string;
+    checkOut: string | null;
+    status: string;
+  };
 }
 
 interface WeeklyStats {
@@ -140,6 +145,28 @@ export default function History() {
             <Text style={styles.percentageValue}>{item.percentage}%</Text>
           </View>
         </View>
+
+        {item.attendance && (
+          <View style={styles.attendanceContainer}>
+            <Text style={styles.attendanceLabel}>Attendance</Text>
+            <View style={styles.attendanceDetails}>
+              <Text style={styles.attendanceTime}>
+                Check In: {format(new Date(item.attendance.checkIn), 'hh:mm a')}
+              </Text>
+              {item.attendance.checkOut && (
+                <Text style={styles.attendanceTime}>
+                  Check Out: {format(new Date(item.attendance.checkOut), 'hh:mm a')}
+                </Text>
+              )}
+              <Text style={[
+                styles.attendanceStatus,
+                { color: item.attendance.status === 'CHECKED_IN' ? '#10B981' : '#6B7280' }
+              ]}>
+                {item.attendance.status === 'CHECKED_IN' ? 'Currently Working' : 'Shift Complete'}
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -421,5 +448,30 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  attendanceContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  attendanceLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  attendanceDetails: {
+    flexDirection: 'column',
+    gap: 4,
+  },
+  attendanceTime: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  attendanceStatus: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: 4,
   },
 });

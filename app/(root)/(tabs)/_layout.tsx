@@ -1,8 +1,24 @@
 import { Tabs } from "expo-router";
-import { Image } from "react-native";
-import { icons } from "@/constants";
+import { useEffect } from 'react';
+import { useRouter } from 'expo-router';
+import { Image } from 'react-native';
+import { checkAuthStatus } from '@/utils/auth';
+import { icons } from '@/constants';
 
 export default function TabLayout() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const isAuthenticated = await checkAuthStatus();
+      if (!isAuthenticated) {
+        router.replace('/(auth)/welcome');
+      }
+    };
+
+    checkAuth();
+  }, []);
+
   return (
     <Tabs screenOptions={{
       headerShown: false,

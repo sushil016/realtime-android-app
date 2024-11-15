@@ -1,36 +1,38 @@
-import { Link, Redirect } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import LottieView from 'lottie-react-native';
+import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-
-
-
+import { View, ActivityIndicator } from "react-native";
+import { checkAuthStatus } from "@/utils/auth";
 
 export default function Index() {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  async function getData(){
-    const data = await AsyncStorage.getItem('isLoggedIn');
-    setIsLoggedIn(data === 'true');
-    console.log("data of isloggedin", data);
-    
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
+
+  const checkLoginStatus = async () => {
+    try {
+      const authStatus = await checkAuthStatus();
+      setIsLoggedIn(authStatus);
+    } catch (error) {
+      console.error("Error checking auth status:", error);
+      setIsLoggedIn(false);
+    }
+  };
+
+  // Show loading while checking auth status
+  if (isLoggedIn === null) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0286FF" />
+      </View>
+    );
   }
-  useEffect(()=>{
-    getData()
-  },[])
-  // const { isSignedIn } = useAuth();
 
+  // Redirect based on auth status
   return isLoggedIn ? (
     <Redirect href="/(root)/(tabs)/home" />
   ) : (
     <Redirect href="/(auth)/welcome" />
   );
-  
-  //<Redirect href="/(auth)/sign-up" />
-    // <SafeAreaView>
-    //   <Link className="" href={"/(auth)/welcome"}>hii</Link>
-    // </SafeAreaView>
-  
-};
+}

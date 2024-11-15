@@ -50,6 +50,7 @@ model User {
   notifications  Notification[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  activities    Activity[]
 }
 
 model LocationPin {
@@ -62,6 +63,7 @@ model LocationPin {
   createdAt     DateTime          @default(now())
   histories     LocationHistory[]
   attendances   Attendance[]
+  activities    Activity[]
 }
 
 model LocationHistory {
@@ -86,6 +88,7 @@ model Attendance {
   notes           String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  activity     Activity?
 }
 
 model Notification {
@@ -107,4 +110,22 @@ model Settings {
   earlyDepartThreshold Int      // minutes
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+}
+
+model Activity {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  timeInZone  Int         @default(0)  // stored in seconds
+  timeOutZone Int         @default(0)  // stored in seconds
+  isInZone    Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  attendance  Attendance? @relation(fields: [attendanceId], references: [id])
+  attendanceId Int?       @unique
+  locationPinId Int
+  locationPin LocationPin @relation(fields: [locationPinId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
 }
